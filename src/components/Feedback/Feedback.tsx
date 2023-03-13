@@ -1,44 +1,100 @@
-import React, { useState } from 'react';
-import styles from './Feedback.module.scss';
+import React, { useState } from "react";
+import styles from "./Feedback.module.scss";
 
 interface FeedbackProps {
   setOpen: (state: boolean) => void;
 }
 
+interface Data {
+  value: string;
+  valid: boolean;
+  hasError: boolean;
+  error: string;
+}
+
 const Feedback: React.FC<FeedbackProps> = ({ setOpen }) => {
-  const [phone, SetPhone] = useState<string>('');
-  const [phoneError, SetPhoneError] = useState<string>('');
-  const [phoneDirty, SetPhoneDirty] = useState<boolean>(false);
+  const [phone, SetPhone] = useState<Data>({
+    value: "",
+    valid: false,
+    hasError: false,
+    error: "",
+  });
+  const [name, SetName] = useState<Data>({
+    value: "",
+    valid: false,
+    hasError: false,
+    error: "",
+  });
+  const [message, SetMessage] = useState<Data>({
+    value: "",
+    valid: false,
+    hasError: false,
+    error: "",
+  });
 
-  const [name, SetName] = useState<string>('');
-  const [nameError, SetNameError] = useState<string>('');
-  const [nameDirty, SetNameDirty] = useState<boolean>(false);
+  const getNumbersValue = (value: string): string => {
+    return value.replace(/\D/g, "");
+  };
 
-  const [message, SetMessage] = useState<string>('');
-  const [messageError, SetMessageError] = useState<string>('');
-  const [messageDirty, SetMessageDirty] = useState<boolean>(false);
+  const handlePhone = (value: string) => {
+    let numbersValue = getNumbersValue(value);
+    let formattedInputValue = "";
+
+    if (!numbersValue) {
+      SetPhone({ ...phone, valid: false, hasError: false, value: "" });
+      return;
+    }
+
+    if (["7", "8"].includes(numbersValue[0])) {
+      let firstSymbol = "+7";
+      formattedInputValue = firstSymbol + " ";
+
+      if (numbersValue.length > 1) {
+        formattedInputValue += "(" + numbersValue.substring(1, 4);
+      }
+      if (numbersValue.length >= 5) {
+        formattedInputValue += ") " + numbersValue.substring(4, 7);
+      }
+      if (numbersValue.length >= 8) {
+        formattedInputValue += "-" + numbersValue.substring(7, 9);
+      }
+      if (numbersValue.length >= 10) {
+        formattedInputValue += "-" + numbersValue.substring(9, 11);
+      }
+    } else {
+      formattedInputValue = "+7 " + numbersValue;
+    }
+
+    SetPhone({
+      ...phone,
+      value: formattedInputValue,
+      valid: false,
+      hasError: false,
+    });
+  };
+
+  const inputPhoneKeyDow = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.code === "Backspace" && getNumbersValue(phone.value).length === 1) {
+      SetPhone({ ...phone, value: "" });
+    }
+  };
 
   const handleChangeInput = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ): void => {
-    const name = e.target.name;
+    const input = e.target.name;
     const value = e.currentTarget.value;
+    const newData = { value: value, valid: false, hasError: false, error: "" };
 
-    switch (name) {
-      case 'phone':
-        SetPhoneDirty(false);
-        SetPhoneError('');
-        SetPhone(value);
+    switch (input) {
+      case "phone":
+        handlePhone(value);
         break;
-      case 'name':
-        SetNameDirty(false);
-        SetNameError('');
-        SetName(value);
+      case "name":
+        SetName({ ...name, ...newData });
         break;
-      case 'message':
-        SetMessageDirty(false);
-        SetMessageError('');
-        SetMessage(value);
+      case "message":
+        SetMessage({ ...message, ...newData });
         break;
       default:
         return;
@@ -47,55 +103,82 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpen }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleError();
+    handleValidate();
 
-    console.log(JSON.stringify({ phone: phone.replace(/[^0-9+]/g, ''), name, message }));
+    console.log(
+      JSON.stringify({
+        phone: phone.value.replace(/[^0-9+]/g, ""),
+        name: name.value.trim(),
+        message: message.value.trim(),
+      })
+    );
   };
 
-  const handleError = () => {
-    const regText = /^[a-zA]+$/;
+  const handleValidate = () => {
+    const regName = /^[a-zA]+$/;
+    const regMessage = /^[a-zA0-9]+$/;
     const regPhone = /\+7\ \(\d{3}\)\ \d{3}-\d{2}-\d{2}/;
+    const emptyInputError = "This field must not be empty";
+    const wrongPhoneFormat = "Only format +7 (999) 999-99-99";
+    const wrongName = "Only uppercase or lowercase letters";
+    const wrongMessage = "Only uppercase or lowercase letters and numbers";
 
-    if (phone) {
-      if (!regPhone.test(String(phone))) {
-        SetPhoneDirty(true);
-        SetPhoneError('Only format +7 (999) 999-99-99');
+    if (phone.value) {
+      if (!regPhone.test(String(phone.value))) {
+        SetPhone({
+          ...phone,
+          valid: false,
+          hasError: true,
+          error: wrongPhoneFormat,
+        });
       } else {
-        SetPhoneError('');
+        SetPhone({ ...phone, valid: true, error: "" });
+      }
+    }
+    if (!phone.value) {
+      SetPhone({
+        ...phone,
+        valid: false,
+        hasError: true,
+        error: emptyInputError,
+      });
+    }
+
+    if (!name.value.trim()) {
+      SetName({
+        ...name,
+        valid: false,
+        hasError: true,
+        error: emptyInputError,
+      });
+    } else {
+      if (name.value) {
+        if (!regName.test(String(name.value.trim()))) {
+          SetName({ ...name, valid: false, hasError: true, error: wrongName });
+        } else {
+          SetName({ ...name, valid: true, error: "" });
+        }
       }
     }
 
-    if (!phone) {
-      SetPhoneDirty(true);
-      SetPhoneError('This field must not be empty');
-    }
-
-    if (name) {
-      if (!regText.test(String(name).toLowerCase())) {
-        SetNameDirty(true);
-        SetNameError('Only uppercase or lowercase letters');
+    if (!message.value.trim()) {
+      SetMessage({
+        ...message,
+        valid: false,
+        hasError: true,
+        error: emptyInputError,
+      });
+    } else {
+      if (!regMessage.test(String(message.value.trim()))) {
+        SetMessage({
+          ...message,
+          valid: false,
+          hasError: true,
+          error: wrongMessage,
+        });
       } else {
-        SetNameError('');
+        SetMessage({ ...message, valid: true, error: "" });
       }
-    }
-
-    if (!name) {
-      SetNameDirty(true);
-      SetNameError('This field must not be empty');
-    }
-
-    if (message) {
-      if (!regText.test(String(message).toLowerCase())) {
-        SetMessageDirty(true);
-        SetMessageError('Only uppercase or lowercase letters');
-      } else {
-        SetMessageError('');
-      }
-    }
-
-    if (!message) {
-      SetMessageDirty(true);
-      SetMessageError('This field must not be empty');
     }
   };
 
@@ -112,44 +195,62 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpen }) => {
               <p className={styles.text}>Your Phone:</p>
               <input
                 onChange={(e) => handleChangeInput(e)}
-                className={`${styles.input} ${phoneDirty ? styles.input__error : ''}`}
+                onKeyDown={(e) => inputPhoneKeyDow(e)}
+                className={`${styles.input} ${
+                  phone.hasError ? styles.input__error : ""
+                } ${phone.valid && !phone.hasError ? styles.input__valid : ""}`}
                 type="tel"
                 name="phone"
                 placeholder="+7 (999) 999-99-99"
-                value={phone}
+                value={phone.value}
+                maxLength={18}
               />
             </label>
-            {phoneError && phoneDirty && <p className={styles.error}>{phoneError}</p>}
+            {phone.error && phone.hasError && (
+              <p className={styles.error}>{phone.error}</p>
+            )}
           </div>
           <div className={styles.group}>
             <label htmlFor="name">
               <p className={styles.text}>Your Name:</p>
               <input
                 onChange={(e) => handleChangeInput(e)}
-                className={`${styles.input} ${nameDirty ? styles.input__error : ''}`}
+                className={`${styles.input} ${
+                  name.hasError ? styles.input__error : ""
+                } ${name.valid && !name.hasError ? styles.input__valid : ""}`}
                 type="text"
                 name="name"
                 placeholder="Enter your name"
-                value={name}
+                value={name.value}
               />
             </label>
-            {nameError && nameDirty && <p className={styles.error}>{nameError}</p>}
+            {name.error && name.hasError && (
+              <p className={styles.error}>{name.error}</p>
+            )}
           </div>
           <div className={styles.group}>
             <p className={styles.text}>Your Message:</p>
             <textarea
               onChange={(e) => handleChangeInput(e)}
               className={`${styles.input} ${styles.area} ${
-                messageDirty ? styles.input__error : ''
+                message.hasError ? styles.input__error : ""
+              } ${
+                message.valid && !message.hasError ? styles.input__valid : ""
               }`}
               placeholder="Enter your message here..."
               name="message"
-              value={message}
+              value={message.value}
             />
-            {messageError && messageDirty && <p className={styles.error}>{messageError}</p>}
+            {message.error && message.hasError && (
+              <p className={styles.error}>{message.error}</p>
+            )}
           </div>
         </div>
-        <button onClick={handleSubmit} className={styles.btn_submit} type="submit">
+        <button
+          onClick={handleSubmit}
+          className={styles.btn_submit}
+          type="submit"
+        >
           Send Feedback
         </button>
       </form>

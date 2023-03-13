@@ -80,6 +80,10 @@
   &.input__error {
     border: 0.2rem solid #f10e0e;
   }
+
+  &.input__valid {
+    border: 0.2rem solid #15af50;
+  }
 }
 
 .area {
