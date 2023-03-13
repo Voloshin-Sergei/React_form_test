@@ -101,22 +101,36 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpen }) => {
     }
   };
 
+  const postData = () => {
+    const requestBody = JSON.stringify({
+      phone: phone.value.replace(/[^0-9+]/g, ""),
+      name: name.value.trim(),
+      message: message.value.trim(),
+    });
+
+    fetch("http:example.com", {
+      method: "POST",
+      body: requestBody,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((err) => {
+        console.log("error", err.message);
+      });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleValidate();
 
-    console.log(
-      JSON.stringify({
-        phone: phone.value.replace(/[^0-9+]/g, ""),
-        name: name.value.trim(),
-        message: message.value.trim(),
-      })
-    );
+    postData();
   };
 
   const handleValidate = () => {
     const regName = /^[a-zA]+$/;
-    const regMessage = /^[a-zA0-9]+$/;
+    const regMessage = /^[0-9a-z_]+$/;
     const regPhone = /\+7\ \(\d{3}\)\ \d{3}-\d{2}-\d{2}/;
     const emptyInputError = "This field must not be empty";
     const wrongPhoneFormat = "Only format +7 (999) 999-99-99";
@@ -246,13 +260,12 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpen }) => {
             )}
           </div>
         </div>
-        <button
+        <input
           onClick={handleSubmit}
           className={styles.btn_submit}
           type="submit"
-        >
-          Send Feedback
-        </button>
+          value={"Send Feedback"}
+        ></input>
       </form>
     </div>
   );
