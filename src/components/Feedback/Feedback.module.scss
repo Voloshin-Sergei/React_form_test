@@ -119,3 +119,21 @@
     color: #fff;
   }
 }
+
+.toast {
+  position: absolute;
+  z-index: 1000;
+  top: 2rem;
+  padding: 1rem 2rem;
+  border: 0.2rem solid #15af50;
+  background: #fff;
+  border-radius: 0.5rem;
+  color: #15af50;
+  font-size: 1.2rem;
+  box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);
+
+  &.toast__error {
+    border: 0.2rem solid #f10e0e;
+    color: #f10e0e;
+  }
+}
